@@ -31,8 +31,14 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall("OK")
+        #print ("Got a request of: %s\n" % self.data)
+        toks = self.data.split()
+        filename = toks[1]
+        try:
+            f = open(filename, 'r')
+        except IOError as e:
+            print "Cannot open that file jackass!"
+        #self.request.sendall("OK")
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
