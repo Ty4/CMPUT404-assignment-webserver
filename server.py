@@ -1,14 +1,14 @@
-import SocketServer
+import SocketServer, os, errno
 # coding: utf-8
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,17 +28,41 @@ import SocketServer
 
 
 class MyWebServer(SocketServer.BaseRequestHandler):
-    
+
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        #print ("Got a request of: %s\n" % self.data)
+        # print ("Got a request of: %s\n" % self.data)
         toks = self.data.split()
-        filename = toks[1]
+        cwd = os.getcwd()
+        wwwDir = os.path.join(cwd, "www")
+        filename = wwwDir + toks[1]
+        # os.path.exists()  -- checks if that context is valid
+        # os.path.isdir()   -- checks if is directory
+        # print "I'm looking for", filename
         try:
             f = open(filename, 'r')
-        except IOError as e:
-            print "Cannot open that file jackass!"
-        #self.request.sendall("OK")
+        except IOError, e:
+            errCode = errno.errorcode[e.errno]
+            # print '\ne', e
+            # print "************************************************************"
+            if errCode == 'ENOENT':
+                reply = 'HTTP/1.1 404 Found\n'
+        else:
+            reply = 'HTTP/1.1 200 OK\n'
+            print filename
+            mimetype = self.getFileType(filename)
+            reply += 'Content-Type: '
+            print mimetype
+            reply += mimetype
+            print reply
+        # self.request.sendall("OK")
+
+    def getFileType(self, filename):
+        ext = (os.path.splitext(filename))[1]
+        if (ext == '.css'):
+            return 'text/css'
+        if (ext == '.html'):
+            return 'text/html'
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
