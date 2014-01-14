@@ -33,12 +33,10 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         toks = self.data.split()
 
-        reply = ""
-
         # getting the full path to the file requested
-        cwd = os.getcwd()
-        wwwDir = os.path.join(cwd, "www")
-        filename = wwwDir + toks[1]
+        filename = self.getFilePath(toks[1])
+        if (os.path.isdir(filename)):
+            filename = self.getFilePath("/index.html")
         # os.path.exists()  -- checks if that context is valid
         # os.path.isdir()   -- checks if is directory
         try:
@@ -47,19 +45,24 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             errCode = errno.errorcode[e.errno]
             if errCode == 'ENOENT':
                 reply = 'HTTP/1.1 404 Found\n'
+                self.request.sendall(reply)
         else:
-            if (os.path.isdir(filename)):
+            content = f.read()
+            content += '\n'
+            reply = self.getReply(filename)
+            self.request.sendall(content + reply)
 
-            reply = 'HTTP/1.1 200 OK\n'
-            # print filename
-            mimetype = self.getFileType(filename)
-            reply += 'Content-Type: '
-            # print mimetype
-            reply += mimetype
-        print reply
-        self.request.sendall(reply)
+    def getReply(self, filename):
+        reply = 'HTTP/1.1 200 OK\nContent-Type: '
+        reply += self.getContentType(filename)
+        return reply
 
-    def getFileType(self, filename):
+    def getFilePath(self, filename):
+        cwd = os.getcwd()
+        wwwDir = os.path.join(cwd, "www")
+        return wwwDir+filename
+
+    def getContentType(self, filename):
         ext = (os.path.splitext(filename))[1]
         if (ext == '.css'):
             return 'text/css'
