@@ -31,31 +31,33 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        # print ("Got a request of: %s\n" % self.data)
         toks = self.data.split()
+
+        reply = ""
+
+        # getting the full path to the file requested
         cwd = os.getcwd()
         wwwDir = os.path.join(cwd, "www")
         filename = wwwDir + toks[1]
         # os.path.exists()  -- checks if that context is valid
         # os.path.isdir()   -- checks if is directory
-        # print "I'm looking for", filename
         try:
             f = open(filename, 'r')
-        except IOError, e:
+        except IOError as e:
             errCode = errno.errorcode[e.errno]
-            # print '\ne', e
-            # print "************************************************************"
             if errCode == 'ENOENT':
                 reply = 'HTTP/1.1 404 Found\n'
         else:
+            if (os.path.isdir(filename)):
+
             reply = 'HTTP/1.1 200 OK\n'
-            print filename
+            # print filename
             mimetype = self.getFileType(filename)
             reply += 'Content-Type: '
-            print mimetype
+            # print mimetype
             reply += mimetype
-            print reply
-        # self.request.sendall("OK")
+        print reply
+        self.request.sendall(reply)
 
     def getFileType(self, filename):
         ext = (os.path.splitext(filename))[1]
