@@ -36,7 +36,8 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         # getting the full path to the file requested
         filename = self.getFilePath(toks[1])
         if (os.path.isdir(filename)):
-            filename = self.getFilePath("/index.html")
+            filename += 'index.html'
+            # filename = self.getFilePath("/index.html")
         # os.path.exists()  -- checks if that context is valid
         # os.path.isdir()   -- checks if is directory
         try:
@@ -50,7 +51,9 @@ class MyWebServer(SocketServer.BaseRequestHandler):
             content = f.read()
             content += '\n'
             reply = self.getReply(filename)
-            self.request.sendall(content + reply)
+            reply += '\n\n'
+            self.request.sendall(reply + content)
+            # self.request.sendall(content + reply)
 
     def getReply(self, filename):
         reply = 'HTTP/1.1 200 OK\nContent-Type: '
