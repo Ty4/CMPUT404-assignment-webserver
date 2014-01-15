@@ -35,25 +35,28 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 
         # getting the full path to the file requested
         filename = self.getFilePath(toks[1])
+        filename = os.path.realpath(filename)
         if (os.path.isdir(filename)):
-            filename += 'index.html'
-            # filename = self.getFilePath("/index.html")
-        # os.path.exists()  -- checks if that context is valid
-        # os.path.isdir()   -- checks if is directory
+            filename += '/index.html'
+
         try:
             f = open(filename, 'r')
         except IOError as e:
             errCode = errno.errorcode[e.errno]
             if errCode == 'ENOENT':
-                reply = 'HTTP/1.1 404 Found\n'
+                reply = 'HTTP/1.1 404 Not Found\n'
                 self.request.sendall(reply)
         else:
-            content = f.read()
-            content += '\n'
-            reply = self.getReply(filename)
-            reply += '\n\n'
-            self.request.sendall(reply + content)
-            # self.request.sendall(content + reply)
+            ext = (filename.split('.'))[-1]
+            if ((ext == 'html') or (ext == 'css')):
+                content = f.read()
+                content += '\n'
+                reply = self.getReply(filename)
+                reply += '\n\n'
+                self.request.sendall(reply + content)
+            else:
+                reply = 'HTTP/1.1 404 Not Found\n'
+                self.request.sendall(reply)
 
     def getReply(self, filename):
         reply = 'HTTP/1.1 200 OK\nContent-Type: '
